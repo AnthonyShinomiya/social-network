@@ -1,0 +1,47 @@
+@import "tailwindcss";
+
+body {
+  @apply m-0 overflow-hidden font-sans;
+}
+
+/* SVG full screen */
+.network-svg {
+  width: 100vw;
+  height: 100vh;
+  touch-action: none;
+}
+
+/* Gradient animation */
+@keyframes gradientFlow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.title-gradient {
+  background: linear-gradient(
+    90deg,
+    #8e2de2,
+    #00f5d4,
+    #00aaff,
+    #ff3cac,
+    #ffb347
+  );
+  background-size: 400% 400%;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradientFlow 10s ease infinite;
+  text-shadow: 0 0 18px rgba(255, 255, 255, 0.25);
+}
+
+.network-svg {
+  width: 100vw;
+  height: 100vh;
+  touch-action: none;
+}

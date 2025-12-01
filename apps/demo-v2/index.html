@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>Inteligencia Conectiva - Jupiter Hub</title>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            background: #0b0c10;
+            overflow: hidden;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+        }
+
+        svg {
+            width: 100vw;
+            height: 100vh;
+            touch-action: none;
+        }
+
+        .node text {
+            font-size: clamp(8px, 2vw, 12px);
+            fill: #fff;
+            text-anchor: middle;
+            dominant-baseline: middle;
+            pointer-events: none;
+            font-weight: 400;
+        }
+
+        .link {
+            fill: none;
+            stroke-linecap: round;
+            stroke-width: 2;
+            stroke-opacity: 0.7;
+        }
+
+        .particle {
+            pointer-events: none;
+        }
+
+        #title {
+            position: absolute;
+            top: 10px;
+            width: 100%;
+            text-align: center;
+            font-size: clamp(1.8rem, 6vw, 3rem);
+            font-weight: 400;
+            letter-spacing: 2px;
+            background: linear-gradient(90deg,
+                    #8e2de2,
+                    #00f5d4,
+                    #00aaff,
+                    #ff3cac,
+                    #ffb347);
+            background-size: 400% 400%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            animation: gradientFlow 10s ease infinite;
+            text-shadow: 0 0 18px rgba(255, 255, 255, 0.25);
+            pointer-events: none;
+        }
+
+        @keyframes gradientFlow {
+            0% {
+                background-position: 0% 50%;
+            }
+
+            50% {
+                background-position: 100% 50%;
+            }
+
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="title">Inteligencia Conectiva</div>
+    <svg></svg>
+    <script>
+        const width = window.innerWidth,
+            height = window.innerHeight;
+        const svg = d3.select("svg").attr("viewBox", [0, 0, width, height]);
+        const defs = svg.append("defs");
+
+        // Gradiente para nodo Hub
+        const gradHub = defs
+            .append("radialGradient")
+            .attr("id", "gradHub")
+            .attr("cx", "50%")
+            .attr("cy", "50%")
+            .attr("r", "50%");
+        gradHub.append("stop").attr("offset", "0%").attr("stop-color", "#ff9e2c");
+        gradHub
+            .append("stop")
+            .attr("offset", "100%")
+            .attr("stop-color", "#d9822b");
+
+        // Iconos geométricos minimalistas
+        defs
+            .append("symbol")
+            .attr("id", "hubIcon")
+            .attr("viewBox", "0 0 100 100")
+            .html(
+                '<circle cx="50" cy="50" r="18" stroke="white" stroke-width="4" fill="none"/>'
+            ); // anillo
+
+        defs
+            .append("symbol")
+            .attr("id", "creatorIcon")
+            .attr("viewBox", "0 0 32 32")
+            .html(
+                '<polygon points="16,4 28,28 4,28" stroke="white" stroke-width="2" fill="none"/>'
+            ); // triángulo
+
+        defs
+            .append("symbol")
+            .attr("id", "ideaIcon")
+            .attr("viewBox", "0 0 24 24")
+            .html(
+                '<rect x="6" y="6" width="12" height="12" transform="rotate(45 12 12)" stroke="white" stroke-width="2" fill="none"/>'
+            ); // rombo
+
+        defs
+            .append("symbol")
+            .attr("id", "followerIcon")
+            .attr("viewBox", "0 0 24 24")
+            .html(
+                '<circle cx="12" cy="12" r="6" stroke="white" stroke-width="2" fill="none"/>'
+            ); // anillo pequeño
+
+        // Paleta de colores
+        const palette = [
+            "#6a0dad",
+            "#00f5d4",
+            "#ff007f",
+            "#00ffee",
+            "#ff3cac",
+            "#ffb347",
+        ];
+
+        let nodeIdCounter = 1000;
+        let nodes = [
+            { id: "Jupiter Hub", type: "hub", grad: "gradHub", role: "Hub" },
+        ];
+        let links = [];
+
+        const sizeScale = Math.min(width, height) / 500;
+        const radius = {
+            hub: 60 * sizeScale,
+            creator: 25 * sizeScale,
+            idea: 15 * sizeScale,
+            follower: 10 * sizeScale,
+        };
+        const iconScale = {
+            hub: 26 * sizeScale,
+            creator: 16 * sizeScale,
+            idea: 14 * sizeScale,
+            follower: 12 * sizeScale,
+        };
+
+        const simulation = d3
+            .forceSimulation(nodes)
+            .force(
+                "link",
+                d3
+                    .forceLink(links)
+                    .id((d) => d.id)
+                    .distance((d) =>
+                        d.source.type === "hub"
+                            ? 180
+                            : d.source.type === "creator"
+                                ? 100
+                                : 60
+                    )
+            )
+            .force("charge", d3.forceManyBody().strength(-180))
+            .force("center", d3.forceCenter(width / 2, height / 2))
+            .force(
+                "collision",
+                d3.forceCollide().radius((d) => radius[d.type] + 5)
+            );
+
+        const gMain = svg.append("g");
+        svg.call(
+            d3
+                .zoom()
+                .scaleExtent([0.4, 2])
+                .on("zoom", (event) => gMain.attr("transform", event.transform))
+        );
+
+        let linkGroup = gMain.append("g");
+        let nodeGroup = gMain.append("g");
+
+        // Subárboles
+        function generateSubtree(parentId) {
+            const newNodes = [],
+                newLinks = [];
+            const numCreators =
+                1 + (width < 600 ? 1 : Math.floor(Math.random() * 2));
+            for (let i = 0; i < numCreators; i++) {
+                const cId = `C_${nodeIdCounter++}`;
+                const colorC = palette[Math.floor(Math.random() * palette.length)];
+                newNodes.push({
+                    id: cId,
+                    type: "creator",
+                    color: colorC,
+                    role: "Creator",
+                });
+                newLinks.push({ source: parentId, target: cId });
+                const numIdeas =
+                    1 + (width < 600 ? 1 : Math.floor(Math.random() * 2) + 1);
+                for (let j = 0; j < numIdeas; j++) {
+                    const iId = `I_${nodeIdCounter++}`;
+                    const colorI = palette[Math.floor(Math.random() * palette.length)];
+                    newNodes.push({
+                        id: iId,
+                        type: "idea",
+                        color: colorI,
+                        role: "Idea",
+                    });
+                    newLinks.push({ source: cId, target: iId });
+                    const numFollowers =
+                        width < 600 ? 1 : 1 + Math.floor(Math.random() * 2);
+                    for (let k = 0; k < numFollowers; k++) {
+                        const fId = `F_${nodeIdCounter++}`;
+                        const colorF =
+                            palette[Math.floor(Math.random() * palette.length)];
+                        newNodes.push({
+                            id: fId,
+                            type: "follower",
+                            color: colorF,
+                            role: "Follower",
+                        });
+                        newLinks.push({ source: iId, target: fId });
+                    }
+                }
+            }
+            return { nodes: newNodes, links: newLinks };
+        }
+
+        // Curva enlaces
+        function curvedLine(d) {
+            const dx = d.target.x - d.source.x,
+                dy = d.target.y - d.source.y,
+                dr = Math.sqrt(dx * dx + dy * dy) * 0.7;
+            return `M${d.source.x},${d.source.y} A${dr},${dr} 0 0,1 ${d.target.x},${d.target.y}`;
+        }
+
+        function updateNetwork() {
+            const linkSel = linkGroup
+                .selectAll("path")
+                .data(links, (d) => d.source.id + "-" + d.target.id);
+            linkSel.join(
+                (enter) =>
+                    enter
+                        .append("path")
+                        .attr("class", "link")
+                        .attr("stroke", "#00f5d4")
+                        .attr("stroke-width", 2)
+                        .attr("fill", "none"),
+                (update) => update,
+                (exit) => exit.remove()
+            );
+
+            const nodeSel = nodeGroup.selectAll("g").data(nodes, (d) => d.id);
+            nodeSel.join(
+                (enter) => {
+                    const g = enter.append("g").attr("class", "node");
+
+                    // Círculo exterior
+                    g.append("circle")
+                        .attr("r", (d) => radius[d.type])
+                        .attr("fill", (d) =>
+                            d.type === "hub" ? `url(#gradHub)` : d.color
+                        )
+                        .attr("stroke", "#fff")
+                        .attr("stroke-width", 0.3);
+
+                    // Círculo interior negro
+                    g.append("circle")
+                        .attr("r", (d) => radius[d.type] * 0.6)
+                        .attr("fill", "#0b0c10");
+
+                    // Icono en anillo externo
+                    g.append("use")
+                        .attr("href", (d) =>
+                            d.type === "hub"
+                                ? "#hubIcon"
+                                : d.type === "creator"
+                                    ? "#creatorIcon"
+                                    : d.type === "idea"
+                                        ? "#ideaIcon"
+                                        : "#followerIcon"
+                        )
+                        .attr("width", (d) => iconScale[d.type])
+                        .attr("height", (d) => iconScale[d.type])
+                        .attr("x", (d) => -iconScale[d.type] / 2)
+                        .attr("y", (d) => -(radius[d.type] * 1.2)) // en el borde superior
+                        .attr("stroke", (d) => (d.type === "hub" ? "#fff" : d.color))
+                        .attr("fill", "none");
+
+                    // Texto
+                    g.append("text").text((d) =>
+                        d.id === "Jupiter Hub" ? d.id : d.role
+                    );
+
+                    g.call(
+                        d3
+                            .drag()
+                            .on("start", (event, d) => {
+                                if (!event.active) simulation.alphaTarget(0.3).restart();
+                                d.fx = d.x;
+                                d.fy = d.y;
+                            })
+                            .on("drag", (event, d) => {
+                                d.fx = event.x;
+                                d.fy = event.y;
+                            })
+                            .on("end", (event, d) => {
+                                if (!event.active) simulation.alphaTarget(0);
+                                d.fx = null;
+                                d.fy = null;
+                            })
+                    );
+
+                    g.on("click touchstart", (event, d) => {
+                        event.stopPropagation();
+                        const newSub = generateSubtree(d.id);
+                        nodes = nodes.concat(newSub.nodes);
+                        links = links.concat(newSub.links);
+                        simulation.nodes(nodes);
+                        simulation.force("link").links(links);
+                        updateNetwork();
+
+                        // Partículas
+                        const particleCount = width < 600 ? 10 : 18;
+                        for (let i = 0; i < particleCount; i++) {
+                            const size = 1 + Math.random() * 2;
+                            const angle = Math.random() * Math.PI * 2;
+                            const distance = 20 + Math.random() * 40;
+                            const color =
+                                palette[Math.floor(Math.random() * palette.length)];
+                            const p = gMain
+                                .append("circle")
+                                .attr("class", "particle")
+                                .attr("r", size)
+                                .attr("cx", d.x)
+                                .attr("cy", d.y)
+                                .attr("fill", color);
+                            gsap.to(p.node(), {
+                                cx: d.x + Math.cos(angle) * distance,
+                                cy: d.y + Math.sin(angle) * distance,
+                                opacity: 0,
+                                duration: 1.2,
+                                ease: "power2.out",
+                                onComplete: () => p.remove(),
+                            });
+                        }
+
+                        simulation.alpha(0.2).restart();
+                    });
+
+                    return g;
+                },
+                (update) => update,
+                (exit) => exit.remove()
+            );
+        }
+
+        simulation.on("tick", () => {
+            linkGroup.selectAll("path").attr("d", (d) => curvedLine(d));
+            nodeGroup
+                .selectAll("g")
+                .attr("transform", (d) => `translate(${d.x},${d.y})`);
+        });
+
+        function animateFlow() {
+            linkGroup.selectAll("path").each(function () {
+                const path = this,
+                    length = path.getTotalLength();
+                d3.select(path)
+                    .attr("stroke-dasharray", length)
+                    .attr("stroke-dashoffset", length);
+                gsap.to(path, {
+                    strokeDashoffset: 0,
+                    duration: 2,
+                    repeat: -1,
+                    ease: "linear",
+                });
+            });
+        }
+        animateFlow();
+
+        window.addEventListener("resize", () => {
+            const w = window.innerWidth,
+                h = window.innerHeight;
+            svg.attr("viewBox", [0, 0, w, h]);
+            simulation.force("center", d3.forceCenter(w / 2, h / 2));
+            simulation.alpha(0.2).restart();
+        });
+
+        updateNetwork();
+    </script>
+</body>
+
+</html>
