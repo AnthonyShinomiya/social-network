@@ -1,48 +1,37 @@
-// src/pages/LoginPage.tsx
+// src/pages/RegisterPage.tsx
 import { type ComponentChildren } from "preact";
 import { useState } from "preact/hooks";
 import { useLocation } from "wouter-preact";
 import { useAuth } from "../features/auth/AuthContext";
-import { Mail, Lock, Share2, AlertCircle, Loader2 } from "lucide-preact";
+import { Mail, Lock, User, Share2, AlertCircle, Loader2 } from "lucide-preact";
 
-// Normaliza errores que vengan como JSON o string
+import { BirthdatePicker } from "../components/BirthdatePicker";
+
 function normalizeError(error: unknown): string | null {
   if (!error) return null;
-
-  if (typeof error === "string") {
-    try {
-      const obj = JSON.parse(error);
-      if (typeof obj === "object" && obj?.error) return obj.error;
-    } catch {}
-    return error;
-  }
-
+  if (typeof error === "string") return error;
   if (error instanceof Error) return error.message;
-
-  return "Ha ocurrido un error al iniciar sesión.";
+  return "Error al crear la cuenta.";
 }
 
-export function LoginPage() {
-  const { login, error: rawError } = useAuth();
+export function RegisterPage() {
+  const { register, error: rawError } = useAuth();
   const [, navigate] = useLocation();
 
+  const [fullName, setFullName] = useState("");
+  const [birthdate, setBirthdate] = useState(""); // YYYY-MM-DD
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
   const error = normalizeError(rawError);
 
-  // ❗️ Ya NO redirigimos si existe me
-  // porque RequireAuth ya maneja eso mostrando login en su lugar.
-
   async function onSubmit(e: Event) {
     e.preventDefault();
     setSubmitting(true);
 
     try {
-      await login(email, password);
-      // Si el login está siendo usado dentro de RequireAuth → no hace falta navegar
-      // Pero si está en /accounts/login → navegar a /
+      await register(fullName, email, birthdate, password);
       navigate("/");
     } finally {
       setSubmitting(false);
@@ -61,7 +50,7 @@ export function LoginPage() {
           shadow-[0_20px_60px_rgba(0,0,0,0.7)]
         "
       >
-        {/* Icono superior */}
+        {/* Icon */}
         <div className="flex justify-center mb-6">
           <div
             className="
@@ -76,9 +65,27 @@ export function LoginPage() {
         </div>
 
         <h1 className="text-2xl font-semibold text-center text-cyan-100 mb-10">
-          Iniciar sesión
+          Crear cuenta
         </h1>
 
+        {/* Nombre completo */}
+        <InputLine
+          icon={<User className="size-4 text-gray-400" />}
+          placeholder="Nombre completo"
+          value={fullName}
+          onInput={(e) =>
+            setFullName((e.currentTarget as HTMLInputElement).value)
+          }
+        />
+
+        <div className="mt-6" />
+
+        {/* Fecha de nacimiento (BirthdatePicker con icono y línea propia) */}
+        <BirthdatePicker value={birthdate} onChange={setBirthdate} />
+
+        <div className="mt-6" />
+
+        {/* Email */}
         <InputLine
           icon={<Mail className="size-4 text-gray-400" />}
           placeholder="Email"
@@ -89,9 +96,10 @@ export function LoginPage() {
 
         <div className="mt-6" />
 
+        {/* Contraseña */}
         <InputLine
           icon={<Lock className="size-4 text-gray-400" />}
-          placeholder="Password"
+          placeholder="Contraseña"
           type="password"
           value={password}
           onInput={(e) =>
@@ -100,15 +108,8 @@ export function LoginPage() {
         />
 
         {error && (
-          <div
-            className="
-              mt-6 flex items-start gap-2
-              rounded-xl border border-pink-400/40
-              bg-pink-500/10 px-3 py-2
-              text-sm text-pink-200
-            "
-          >
-            <AlertCircle className="mt-0.5 size-4 shrink-0" />
+          <div className="mt-6 flex items-start gap-2 rounded-xl border border-pink-400/40 bg-pink-500/10 px-3 py-2 text-sm text-pink-200">
+            <AlertCircle className="size-4 mt-0.5" />
             <p>{error}</p>
           </div>
         )}
@@ -132,17 +133,14 @@ export function LoginPage() {
           {submitting ? (
             <Loader2 className="size-6 animate-spin text-white/90" />
           ) : (
-            "Entrar"
+            "Registrarse"
           )}
         </button>
 
         <p className="mt-6 text-center text-sm text-gray-400">
-          ¿No tienes cuenta?{" "}
-          <a
-            href="/accounts/emailsignup"
-            className="text-cyan-300 hover:underline"
-          >
-            Crear una ahora
+          ¿Ya tienes cuenta?{" "}
+          <a href="/accounts/login" className="text-cyan-300 hover:underline">
+            Inicia sesión
           </a>
         </p>
       </form>
@@ -175,17 +173,13 @@ function InputLine({
         transition-colors
       "
     >
-      <div className="shrink-0">{icon}</div>
+      <div>{icon}</div>
       <input
-        className="
-          flex-1 bg-transparent outline-none
-          text-gray-100 placeholder-gray-500
-          text-sm
-        "
         type={type}
         placeholder={placeholder}
         value={value}
         onInput={onInput}
+        className="flex-1 bg-transparent outline-none text-gray-100 placeholder-gray-500 text-sm"
       />
     </div>
   );
