@@ -1,5 +1,6 @@
 // src/features/auth/api.ts
 import { apiFetch } from "../../lib/api";
+import type { Me } from "./AuthContext";
 
 export async function login(email: string, password: string) {
     return apiFetch("/users/sign_in", {
@@ -29,5 +30,5 @@ export async function logout() {
 }
 
 export async function getMe() {
-    return apiFetch<{ id: number; email: string; full_name: string; birthdate: string }>("/api/me");
+    return apiFetch<Me>("/api/me");
 }

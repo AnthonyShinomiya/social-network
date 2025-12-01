@@ -12,7 +12,8 @@ import {
 export type Me = {
   id: number;
   email: string;
-  full_name: string;
+  name: string;
+  last_name: string;
   birthdate: string;
 } | null;
 
