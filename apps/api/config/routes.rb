@@ -14,5 +14,16 @@ Rails.application.routes.draw do
   #
   namespace :api, defaults: { format: :json } do
     resource :me, only: :show  # Usa Api::MeController
+
+    resource :home, only: [ :show ], controller: "home"
+    resources :users, only: [ :show ]
+
+    resources :projects, only: [ :index, :show, :create, :update ] do
+      member do
+        post :follow
+        post :unfollow
+        post :promote_to_collaborator
+      end
+    end
   end
 end

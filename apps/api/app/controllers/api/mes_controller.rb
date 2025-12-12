@@ -1,6 +1,4 @@
-class Api::MesController < ApplicationController
-  before_action :authenticate_user!
-
+class Api::MesController < Api::BaseController
   def show
     render json: {
       id: current_user.id,
