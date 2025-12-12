@@ -33,7 +33,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white grid place-items-center p-4">
+    <div className="min-h-screen bg-gradient grid place-items-center p-4">
       <form
         onSubmit={onSubmit}
         className="

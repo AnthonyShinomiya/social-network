@@ -30,7 +30,7 @@ export function Sidebar() {
       onMouseEnter={() => setExpanded(true)}
       onMouseLeave={() => setExpanded(false)}
       className={clsx(
-        "fixed left-0 top-0 bottom-0 z-50 h-screen bg-white transition-all duration-300 p-3 flex flex-col",
+        "fixed left-0 top-0 bottom-0 z-50 h-screen bg-white  transition-all duration-300 p-3 flex flex-col",
         expanded ? "w-64" : "w-20"
       )}
     >

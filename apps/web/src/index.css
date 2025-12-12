@@ -2,3 +2,21 @@
 .input {
   @apply w-full border rounded px-3 py-2;
 }
+
+@layer utilities {
+  .animate-slideLeft {
+    animation: slideLeft 0.25s ease-out;
+  }
+  @keyframes slideLeft {
+    0% {
+      transform: translateX(100%);
+    }
+    100% {
+      transform: translateX(0);
+    }
+  }
+}
+
+.bg-gradient {
+  @apply bg-[radial-gradient(circle_at_top,_rgba(56,189,248,0.10),transparent_55%),radial-gradient(circle_at_bottom,_rgba(244,114,182,0.10),transparent_55%)];
+}

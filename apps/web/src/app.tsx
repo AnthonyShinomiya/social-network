@@ -9,6 +9,7 @@ import { RegisterPage } from "./pages/RegisterPage";
 import { HomePage } from "./pages/HomePage";
 import { NotFoundPage } from "./pages/NotFoundPage";
 import { Sidebar } from "./components/Sidebar";
+import { ProjectPage } from "./pages/ProjectPage";
 
 export function App() {
   const { me } = useAuth();
@@ -26,6 +27,12 @@ export function App() {
         <Route path="/">
           <RequireAuth>
             <HomePage />
+          </RequireAuth>
+        </Route>
+
+        <Route path="/projects/:id">
+          <RequireAuth>
+            <ProjectPage />
           </RequireAuth>
         </Route>
 

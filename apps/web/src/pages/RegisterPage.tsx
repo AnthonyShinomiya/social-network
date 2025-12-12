@@ -4,7 +4,7 @@ import { Link, useLocation } from "wouter-preact";
 import { Mail, Lock, User, Share2, AlertCircle, Loader2 } from "lucide-preact";
 
 import { useAuth } from "@/features/auth/AuthContext";
-import { BirthdatePicker } from "@/components/BirthdatePicker";
+import { BirthdatePicker } from "@/components/forms/BirthdatePicker";
 import { InputLine } from "@/components/forms/InputLine";
 import { normalizeError } from "@/utils/normalizeError";
 
@@ -33,7 +33,7 @@ export function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-white grid place-items-center p-4">
+    <div className="min-h-screen bg-gradient grid place-items-center p-4">
       <form
         onSubmit={onSubmit}
         className="
